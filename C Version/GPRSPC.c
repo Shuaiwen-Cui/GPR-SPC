@@ -1,9 +1,9 @@
-'''
+/*
 Author: SHUAIWEN CUI
 E-mail: SHUAIWEN001@e.ntu.edu.sg
 Data: Aug 02 2023
 Description: This programme is used to perform Gaussian Process Regression (GPR) and Stochastic Process Control (SPC) on the given dataset. More details can be found in the comments.
-'''
+*/
 
 // note: this program requires the GNU Scientific Library (GSL) to be installed. Please install GSL before running this program.
 
