@@ -515,6 +515,11 @@ int main(void)
     }
 
     //// III - Stochastic Process Control (SPC)
+    // print progress
+    if (feedback_mode == 1)
+    {
+        printf("\n============================================= III - Stochastic Process Control\n");
+    }
 
     // calculate the residual of the prediction - y_res = y_testtrue - y_testpred
     gsl_matrix *y_res = gsl_matrix_alloc(num_test_points, 1);
@@ -531,6 +536,8 @@ int main(void)
         avg_y_testpred_std += gsl_matrix_get(std_y_testpred, i, 0);
     }
     avg_y_testpred_std /= num_test_points;
+
+
 
     // UCL =  1.96 * avg_y_testpred_std
     double UCL =  1.96 * avg_y_testpred_std;
@@ -568,7 +575,6 @@ int main(void)
     // print progress
     if (feedback_mode == 1)
     {
-        printf("\n============================================= III - Stochastic Process Control\n");
         printf("\n[Progress Report]>>  UCL and LCL of the residual calculated.\n\n");
         printf("UCL: %16.11f\n", UCL);
         printf("LCL: %16.11f\n", LCL);
