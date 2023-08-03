@@ -531,10 +531,10 @@ int main(void)
         avg_y_testpred_std += gsl_matrix_get(std_y_testpred, i, 0);
     }
     avg_y_testpred_std /= num_test_points;
-    // UCL = mean_y_testpred + 1.96 * avg_y_testpred_std
-    double UCL = gsl_matrix_get(mean_y_testpred,0,0) + 1.96 * avg_y_testpred_std;
-    // LCL = mean_y_testpred - 1.96 * avg_y_testpred_std
-    double LCL = gsl_matrix_get(mean_y_testpred,0,0) - 1.96 * avg_y_testpred_std;
+    // UCL =  1.96 * avg_y_testpred_std
+    double UCL =  1.96 * avg_y_testpred_std;
+    // LCL = - 1.96 * avg_y_testpred_std
+    double LCL =  -1.96 * avg_y_testpred_std;
 
     // print progress
     if (feedback_mode == 1)
