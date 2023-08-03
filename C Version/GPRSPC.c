@@ -531,11 +531,39 @@ int main(void)
         avg_y_testpred_std += gsl_matrix_get(std_y_testpred, i, 0);
     }
     avg_y_testpred_std /= num_test_points;
+    
     // UCL =  1.96 * avg_y_testpred_std
     double UCL =  1.96 * avg_y_testpred_std;
     // LCL = - 1.96 * avg_y_testpred_std
     double LCL =  -1.96 * avg_y_testpred_std;
 
+    // take the minimum and maximum of the residual
+    double min_y_res = gsl_matrix_get(y_res, 0, 0);
+    for (int i = 0; i < num_test_points; i++)
+    {
+        if (gsl_matrix_get(y_res, i, 0) < min_y_res)
+        {
+            min_y_res = gsl_matrix_get(y_res, i, 0);
+        }
+    }
+    double max_y_res = gsl_matrix_get(y_res, 0, 0);
+    for (int i = 0; i < num_test_points; i++)
+    {
+        if (gsl_matrix_get(y_res, i, 0) > max_y_res)
+        {
+            max_y_res = gsl_matrix_get(y_res, i, 0);
+        }
+    }
+
+    // updatea UCL and LCL
+    if (UCL < max_y_res)
+    {
+        UCL = max_y_res;
+    }
+    if (LCL > min_y_res)
+    {
+        LCL = min_y_res;
+    }
     // print progress
     if (feedback_mode == 1)
     {
