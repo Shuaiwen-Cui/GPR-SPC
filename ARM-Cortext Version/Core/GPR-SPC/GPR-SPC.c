@@ -75,7 +75,7 @@
 #define WriteBufferSize 500
 #define DIM_GPR_IN 2
 #define DIM_GPR_OUT 1
-#define NUM_GPR_TRAIN 20
+#define NUM_GPR_TRAIN 30
 #define NUM_GPR_PRED 10
 
 /**
@@ -181,6 +181,26 @@ static float32_t IN_TRAIN[NUM_GPR_TRAIN][DIM_GPR_IN] = {
     {1.24524626, 0.011249717},
     {1.24524626, 0.011326811},
     {0.188031489, 0.011673594},
+    {-0.625930326, 0.012045779},
+    {-0.176847945, 0.012064259},
+    {-1.683145096, 0.012360465},
+    {0.86165506, 0.012372318},
+    {-1.842195106, 0.012419119},
+    {-1.851550989, 0.012601391},
+    {-1.411824491, 0.012636194},
+    {-3.544965799, 0.012663324},
+    {0.09447266, 0.013029125},
+    {1.572702162, 0.013241147},
+    // {-0.326542072, 0.013251486},
+    // {0.38450503, 0.013380978},
+    // {0.047693245, 0.013386735},
+    // {-0.195559711, 0.013429773},
+    // {-0.055221467, 0.013449016},
+    // {0.375149147, 0.013451535},
+    // {1.114263899, 0.01345313},
+    // {0.075760894, 0.01351165},
+    // {-0.513659731, 0.013922766},
+    // {-0.073933233, 0.014045208},
 };
 
 static float32_t OUT_TRAIN[NUM_GPR_TRAIN][DIM_GPR_OUT] = {
@@ -204,6 +224,26 @@ static float32_t OUT_TRAIN[NUM_GPR_TRAIN][DIM_GPR_OUT] = {
     {0.019987955},
     {0.018841027},
     {0.017108256},
+    {0.022313004},
+    {0.022789165},
+    {0.023946532},
+    {0.018431911},
+    {0.028873205},
+    {0.036266196},
+    {0.064454756},
+    {0.028746338},
+    {0.020199155},
+    {0.034649386},
+    // {0.028880162},
+    // {0.022256003},
+    // {0.030355093},
+    // {0.020655782},
+    // {0.024493448},
+    // {0.020462472},
+    // {0.019182196},
+    // {0.025183835},
+    // {0.029290589},
+    // {0.019565619},
 };
 
 static float32_t IN_PRED[NUM_GPR_PRED][DIM_GPR_IN] = {
@@ -479,6 +519,28 @@ int GPR_SPC_Computing(void)
     arm_mat_init_f32(&Kpt, NUM_GPR_PRED, NUM_GPR_TRAIN, pKpt);
     arm_mat_init_f32(&Ktp, NUM_GPR_TRAIN, NUM_GPR_PRED, pKtp);
 
+    // print the last 3 rows and cols of Kpt
+    printf("[GPR_SPC] : Kpt (last 3 rows and cols)\n");
+    for (i = NUM_GPR_PRED - 3; i < NUM_GPR_PRED; i++)
+    {
+        for (j = NUM_GPR_TRAIN - 3; j < NUM_GPR_TRAIN; j++)
+        {
+            printf("%9f, ", pKpt[i * NUM_GPR_TRAIN + j]);
+        }
+        printf("\n");
+    }
+
+    // print the last 3 rows and cols of Ktp
+    printf("[GPR_SPC] : Ktp (last 3 rows and cols)\n");
+    for (i = NUM_GPR_TRAIN - 3; i < NUM_GPR_TRAIN; i++)
+    {
+        for (j = NUM_GPR_PRED - 3; j < NUM_GPR_PRED; j++)
+        {
+            printf("%9f, ", pKtp[i * NUM_GPR_PRED + j]);
+        }
+        printf("\n");
+    }
+
     // [Kernal Matrices] - Kpp
     for (i = 0; i < NUM_GPR_PRED; i++)
     {
@@ -489,13 +551,46 @@ int GPR_SPC_Computing(void)
     }
     arm_mat_init_f32(&Kpp, NUM_GPR_PRED, NUM_GPR_PRED, pKpp);
 
+    // print the last 3 rows and cols of Kpp
+    printf("[GPR_SPC] : Kpp (last 3 rows and cols)\n");
+    for (i = NUM_GPR_PRED - 3; i < NUM_GPR_PRED; i++)
+    {
+        for (j = NUM_GPR_PRED - 3; j < NUM_GPR_PRED; j++)
+        {
+            printf("%9f, ", pKpp[i * NUM_GPR_PRED + j]);
+        }
+        printf("\n");
+    }
+
     // [Kernal Matrices] - IKttn, i.e., the inverse of Kttn
     arm_mat_init_f32(&IKttn, NUM_GPR_TRAIN, NUM_GPR_TRAIN, pIKttn);
     arm_mat_inverse_f32(&Kttn, &IKttn);
 
+    // print the last 3 rows and cols of IKttn
+    printf("[GPR_SPC] : IKttn (last 3 rows and cols)\n");
+    for (i = NUM_GPR_TRAIN - 3; i < NUM_GPR_TRAIN; i++)
+    {
+        for (j = NUM_GPR_TRAIN - 3; j < NUM_GPR_TRAIN; j++)
+        {
+            printf("%9f, ", pIKttn[i * NUM_GPR_TRAIN + j]);
+        }
+        printf("\n");
+    }
+
     //[Interim Matrices] - KptxIKttn
     arm_mat_init_f32(&KptxIKttn, NUM_GPR_PRED, NUM_GPR_TRAIN, pKptxIKttn);
     arm_mat_mult_f32(&Kpt, &IKttn, &KptxIKttn);
+
+    // print the last 3 rows and cols of KptxIKttn
+    printf("[GPR_SPC] : KptxIKttn (last 3 rows and cols)\n");
+    for (i = NUM_GPR_PRED - 3; i < NUM_GPR_PRED; i++)
+    {
+        for (j = NUM_GPR_TRAIN - 3; j < NUM_GPR_TRAIN; j++)
+        {
+            printf("%9f, ", pKptxIKttn[i * NUM_GPR_TRAIN + j]);
+        }
+        printf("\n");
+    }
 
     // [Interim Matrices] - OUT_TRAIN_AVG
     for (j = 0; j < DIM_GPR_OUT; j++)
@@ -594,10 +689,11 @@ int GPR_SPC_Computing(void)
     {
         for (j = 0; j < DIM_GPR_OUT; j++)
         {
-            printf("%12f\t", OUT_PRED[i][j]);
+            printf("%12f,", OUT_PRED[i][j]);
         }
-        printf("\n\r");
+        // printf("\n\r");
     }
+    printf("\n\r");
 
     // [Interim Matrices] - Out_Pred_Var_T2, i.e., Kpt * Inv(Ktt + sigma^2 * I) * Ktp, careful with the sign
 
@@ -608,6 +704,17 @@ int GPR_SPC_Computing(void)
     // Kpt * Inv(Ktt + sigma^2 * I) * Ktp = Out_Pred_Var_T2
     arm_mat_mult_f32(&KptxIKttn, &Ktp, &Out_Pred_Var_T2);
 
+    // print out the last 3 rows and cols of the result Out_Pred_Var_T2
+    printf("[GPR_SPC] : Out_Pred_Var_T2 (last 3 rows and cols)\n");
+    for (i = NUM_GPR_PRED - 3; i < NUM_GPR_PRED; i++)
+    {
+        for (j = NUM_GPR_PRED - 3; j < NUM_GPR_PRED; j++)
+        {
+            printf("%9f, ", pOut_Pred_Var_T2[i * NUM_GPR_PRED + j]);
+        }
+        printf("\n");
+    }
+
     // [Interim Matrices] - Out_Pred_Var, i.e., Kpp - Kpt * Inv(Ktt + sigma^2 * I) * Ktp
 
     // init the matrix instance
@@ -615,6 +722,17 @@ int GPR_SPC_Computing(void)
 
     // calculate the predicted output variance
     arm_mat_sub_f32(&Kpp, &Out_Pred_Var_T2, &Out_Pred_Var);
+
+    // print out the last 3 rows and cols of the result Out_Pred_Var
+    printf("[GPR_SPC] : Out_Pred_Var (last 3 rows and cols)\n");
+    for (i = NUM_GPR_PRED - 3; i < NUM_GPR_PRED; i++)
+    {
+        for (j = NUM_GPR_PRED - 3; j < NUM_GPR_PRED; j++)
+        {
+            printf("%9f, ", pOut_Pred_Var[i * NUM_GPR_PRED + j]);
+        }
+        printf("\n");
+    }
 
     // [Interim Matrices] - fill out OUT_PRED_VAR_ORIGIN
     for (i = 0; i < NUM_GPR_PRED; i++)
@@ -641,7 +759,7 @@ int GPR_SPC_Computing(void)
         for (j = 0; j < DIM_GPR_OUT; j++)
         {
             printf("%12f\t", OUT_PRED_VAR[i][j]);
-        }
+        } 
         printf("\n\r");
     }
 
@@ -650,6 +768,8 @@ int GPR_SPC_Computing(void)
     {
         for (j = 0; j < DIM_GPR_OUT; j++)
         {
+            // sqrt first then minus, sqrt(Kpp) - sqrt(Kpt * Inv(Ktt + sigma^2 * I) * Ktp), to minimize the error
+            // OUT_PRED_STD[i][j] = sqrt(pKpp[i * NUM_GPR_PRED + i]) - sqrt(pOut_Pred_Var_T2[i * NUM_GPR_PRED + i]);
             OUT_PRED_STD[i][j] = sqrt(OUT_PRED_VAR[i][j]);
         }
     }
@@ -661,10 +781,11 @@ int GPR_SPC_Computing(void)
     {
         for (j = 0; j < DIM_GPR_OUT; j++)
         {
-            printf("%12f\t", OUT_PRED_STD[i][j]);
+            printf("%12f,", OUT_PRED_STD[i][j]);
         }
-        printf("\n\r");
+        // printf("\n\r")
     }
+    printf("\n\r");
 
     /* COMPUTATION ----------------------- END*/
 
