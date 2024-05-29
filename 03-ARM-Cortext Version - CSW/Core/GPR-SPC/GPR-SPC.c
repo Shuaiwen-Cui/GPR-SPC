@@ -506,6 +506,17 @@ int GPR_SPC_Computing(void)
     }
     arm_mat_init_f32(&Kttn, NUM_GPR_TRAIN, NUM_GPR_TRAIN, pKttn);
 
+    // print the last 3 rows and cols of Kttn
+    printf("[GPR_SPC] : Kttn (last 3 rows and cols)\n");
+    for (i = NUM_GPR_TRAIN - 3; i < NUM_GPR_TRAIN; i++)
+    {
+        for (j = NUM_GPR_TRAIN - 3; j < NUM_GPR_TRAIN; j++)
+        {
+            printf("%9f, ", pKttn[i * NUM_GPR_TRAIN + j]);
+        }
+        printf("\n");
+    }
+
     // [Kernal Matrices] - Kpt, Ktp
     for (i = 0; i < NUM_GPR_PRED; i++)
     {
