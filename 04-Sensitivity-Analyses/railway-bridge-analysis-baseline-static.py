@@ -171,27 +171,21 @@ print("element_list: ", element_list)
 print("element_deck: ", element_deck)
 print("element_pier: ", element_pier)
 
-# [DAMPING]
-
-ops.rayleigh(0.1, 0.0, 0.0, 0.0)  # 试着引入阻尼或调节质量矩阵比例因子
-
-
 # [BOUNDARY CONDITIONS]
 
-# 1. Fix the leftmost and rightmost deck nodes in xyz directions (only translation, no rotation)
+# 1. Fix the leftmost and rightmost deck nodes in xyz directions
+# Leftmost deck nodes (check if nodes exist before applying constraints)
 if node_deck_left and node_deck_right:
-# 修改桥面节点的边界条件，仅对Y方向位移施加约束
-    ops.fix(node_deck_left[0], 1, 0, 1, 0, 0, 0)  # 保持Y方向和Z方向约束
-    ops.fix(node_deck_right[0], 1, 0, 1, 0, 0, 0) 
-    ops.fix(node_deck_left[-1], 1, 0, 1, 0, 0, 0)
-    ops.fix(node_deck_right[-1], 1, 0, 1, 0, 0, 0)
+    ops.fix(node_deck_left[0], 1, 1, 1, 1, 1, 1)  # Fix node at left end
+    ops.fix(node_deck_right[0], 1, 1, 1, 1, 1, 1)  # Fix node at left end
+    ops.fix(node_deck_left[-1], 1, 1, 1, 1, 1, 1)  # Fix node at right end
+    ops.fix(node_deck_right[-1], 1, 1, 1, 1, 1, 1)  # Fix node at right end
 
-
-# 2. Fix all the pier bottom nodes in xyz directions (fully constrained)
+# 2. Fix all the pier bottom nodes (both left and right) if they exist
 if node_pier_left and node_pier_right:
     for i in range(len(node_pier_left)):
-        ops.fix(node_pier_left[i], 1, 1, 1, 0, 0, 0)  # Fix left bottom pier nodes (translation only)
-        ops.fix(node_pier_right[i], 1, 1, 1, 0, 0, 0)  # Fix right bottom pier nodes (translation only)
+        ops.fix(node_pier_left[i], 1, 1, 1, 0, 0, 0)  # Fix left bottom pier nodes
+        ops.fix(node_pier_right[i], 1, 1, 1, 0, 0, 0)  # Fix right bottom pier nodes
 
 
 # [MODEL VISUALIZATION]
@@ -309,52 +303,68 @@ plt.show()
 # LOAD APPLICATION
 # =================================================
 
-# 1. Generate or load earthquake time series data (example: using numpy)
-duration = 10.0  # Total duration of the earthquake (in seconds)
-dt = 0.001  # Time step (in seconds)
-time_steps = int(duration / dt)
-# Example sinusoidal ground motion with reduced amplitude
-time_series = 0.01 * np.sin(np.linspace(0, 10 * np.pi, time_steps))
+# [Load Definition]
+ops.timeSeries('Linear', 1)  # Linear time series for static analysis
+ops.pattern('Plain', 1, 1)  # Load pattern
 
-# 2. Define the time series in OpenSees
-ops.timeSeries('Path', 1, '-dt', dt, '-values', *time_series.tolist())
-
-# 3. Define a load pattern using the time series (ensure to use the correct number of DOFs)
-ops.pattern('UniformExcitation', 1, 1, '-accel', 1)  # Uniform excitation load pattern in X direction (global)
+# Apply static load at node 5 (Example: Fx = 100, Fy = 50, Fz = -30)
+ops.load(5, 100, 50, -30, 0, 0, 0)  # Apply force in XYZ directions at node 5
 
 # =================================================
 # ANALYSES & RECORDING
 # =================================================
 
-# Set up the dynamic analysis parameters
-ops.constraints('Transformation')  # Apply transformation constraints
-ops.numberer('RCM')  # Reverse Cuthill-McKee algorithm for numbering DOFs
-ops.system('UmfPack')  # Linear system solver
-ops.test('NormUnbalance', 1e-5, 10)  # Convergence test
-ops.algorithm('NewtonLineSearch', '-type', 'Bisection') # Newton algorithm for nonlinear solution
-ops.integrator('Newmark', 0.5, 0.25)  # Newmark-beta method (typical for dynamic analysis)
-ops.analysis('Transient')  # Set the type of analysis to transient
+# Define analysis
+ops.constraints('Transformation')  # Transformation method for constraints
+ops.numberer('RCM')  # Reverse Cuthill-McKee numbering scheme
+ops.system('BandGeneral')  # Solver system
+ops.test('NormDispIncr', 1.0e-6, 100)  # Convergence test
+ops.algorithm('Newton')  # Newton's method for solving
+ops.integrator('LoadControl', 1.0)  # Static load control
+ops.analysis('Static')  # Define static analysis
 
-# Time steps for the analysis
-num_steps = time_steps  # Number of time steps
-ops.analyze(num_steps, dt)  # Run the analysis
+# Perform analysis
+ops.analyze(1)  # Run the analysis for 1 step
 
 # =================================================
 # POST-PROCESSING & VISUALIZATION
 # =================================================
 
-# Example: Extract displacement at a specific node (node 1 in this case) over time
-displacement_x = []
-for step in range(num_steps):
-    ops.analyze(1, dt)  # Perform the analysis step
-    displacement_x.append(ops.nodeDisp(1, 1))  # Get displacement in X-direction at node 1
+# Extract node displacements before and after loading
+node_id = 5  # Node at which the load is applied
+disp_before = ops.nodeDisp(node_id)  # Displacement before applying load
+disp_after = ops.nodeDisp(node_id)  # Displacement after applying load
 
-# Plot the displacement over time for node 1
-time = np.arange(0, num_steps * dt, dt)
-plt.figure()
-plt.plot(time, displacement_x)
-plt.xlabel('Time (s)')
-plt.ylabel('Displacement (m)')
-plt.title('Displacement of Node 1 in X direction over Time')
-plt.grid(True)
+# Print the displacement results
+print(f"Node {node_id} displacement before load: {disp_before}")
+print(f"Node {node_id} displacement after load: {disp_after}")
+
+# Visualization of the structure before and after loading
+fig = plt.figure(figsize=(10, 6))
+ax = fig.add_subplot(111, projection='3d')
+
+# Plot initial node positions (before load)
+x_coords_before, y_coords_before, z_coords_before = get_node_coords(node_list)
+ax.scatter(x_coords_before, y_coords_before, z_coords_before, c='b', marker='o', label='Before Load')
+
+# Plot displaced node positions (after load)
+displacements = [ops.nodeDisp(node_id) for node_id in node_list]
+x_coords_after = [x + disp[0] for x, disp in zip(x_coords_before, displacements)]
+y_coords_after = [y + disp[1] for y, disp in zip(y_coords_before, displacements)]
+z_coords_after = [z + disp[2] for z, disp in zip(z_coords_before, displacements)]
+ax.scatter(x_coords_after, y_coords_after, z_coords_after, c='r', marker='o', label='After Load')
+
+# Add axis labels and title
+ax.set_xlabel('X (m)')
+ax.set_ylabel('Y (m)')
+ax.set_zlabel('Z (m)')
+ax.set_title(f'Node Displacements Before and After Load at Node {node_id}')
+
+# Set equal aspect ratio for 3D plot
+set_axes_equal(ax)
+
+# Add legend
+ax.legend()
+
+plt.tight_layout()
 plt.show()

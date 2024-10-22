@@ -171,27 +171,21 @@ print("element_list: ", element_list)
 print("element_deck: ", element_deck)
 print("element_pier: ", element_pier)
 
-# [DAMPING]
-
-ops.rayleigh(0.1, 0.0, 0.0, 0.0)  # 试着引入阻尼或调节质量矩阵比例因子
-
-
 # [BOUNDARY CONDITIONS]
 
-# 1. Fix the leftmost and rightmost deck nodes in xyz directions (only translation, no rotation)
+# 1. Fix the leftmost and rightmost deck nodes in xyz directions
+# Leftmost deck nodes (check if nodes exist before applying constraints)
 if node_deck_left and node_deck_right:
-# 修改桥面节点的边界条件，仅对Y方向位移施加约束
-    ops.fix(node_deck_left[0], 1, 0, 1, 0, 0, 0)  # 保持Y方向和Z方向约束
-    ops.fix(node_deck_right[0], 1, 0, 1, 0, 0, 0) 
-    ops.fix(node_deck_left[-1], 1, 0, 1, 0, 0, 0)
-    ops.fix(node_deck_right[-1], 1, 0, 1, 0, 0, 0)
+    ops.fix(node_deck_left[0], 1, 1, 1, 0, 0, 0)  # Fix node at left end
+    ops.fix(node_deck_right[0], 1, 1, 1, 0, 0, 0)  # Fix node at left end
+    ops.fix(node_deck_left[-1], 1, 1, 1, 0, 0, 0)  # Fix node at right end
+    ops.fix(node_deck_right[-1], 1, 1, 1, 0, 0, 0)  # Fix node at right end
 
-
-# 2. Fix all the pier bottom nodes in xyz directions (fully constrained)
+# 2. Fix all the pier bottom nodes (both left and right) if they exist
 if node_pier_left and node_pier_right:
     for i in range(len(node_pier_left)):
-        ops.fix(node_pier_left[i], 1, 1, 1, 0, 0, 0)  # Fix left bottom pier nodes (translation only)
-        ops.fix(node_pier_right[i], 1, 1, 1, 0, 0, 0)  # Fix right bottom pier nodes (translation only)
+        ops.fix(node_pier_left[i], 1, 1, 1, 0, 0, 0)  # Fix left bottom pier nodes
+        ops.fix(node_pier_right[i], 1, 1, 1, 0, 0, 0)  # Fix right bottom pier nodes
 
 
 # [MODEL VISUALIZATION]
@@ -309,52 +303,10 @@ plt.show()
 # LOAD APPLICATION
 # =================================================
 
-# 1. Generate or load earthquake time series data (example: using numpy)
-duration = 10.0  # Total duration of the earthquake (in seconds)
-dt = 0.001  # Time step (in seconds)
-time_steps = int(duration / dt)
-# Example sinusoidal ground motion with reduced amplitude
-time_series = 0.01 * np.sin(np.linspace(0, 10 * np.pi, time_steps))
-
-# 2. Define the time series in OpenSees
-ops.timeSeries('Path', 1, '-dt', dt, '-values', *time_series.tolist())
-
-# 3. Define a load pattern using the time series (ensure to use the correct number of DOFs)
-ops.pattern('UniformExcitation', 1, 1, '-accel', 1)  # Uniform excitation load pattern in X direction (global)
-
 # =================================================
 # ANALYSES & RECORDING
 # =================================================
 
-# Set up the dynamic analysis parameters
-ops.constraints('Transformation')  # Apply transformation constraints
-ops.numberer('RCM')  # Reverse Cuthill-McKee algorithm for numbering DOFs
-ops.system('UmfPack')  # Linear system solver
-ops.test('NormUnbalance', 1e-5, 10)  # Convergence test
-ops.algorithm('NewtonLineSearch', '-type', 'Bisection') # Newton algorithm for nonlinear solution
-ops.integrator('Newmark', 0.5, 0.25)  # Newmark-beta method (typical for dynamic analysis)
-ops.analysis('Transient')  # Set the type of analysis to transient
-
-# Time steps for the analysis
-num_steps = time_steps  # Number of time steps
-ops.analyze(num_steps, dt)  # Run the analysis
-
 # =================================================
 # POST-PROCESSING & VISUALIZATION
 # =================================================
-
-# Example: Extract displacement at a specific node (node 1 in this case) over time
-displacement_x = []
-for step in range(num_steps):
-    ops.analyze(1, dt)  # Perform the analysis step
-    displacement_x.append(ops.nodeDisp(1, 1))  # Get displacement in X-direction at node 1
-
-# Plot the displacement over time for node 1
-time = np.arange(0, num_steps * dt, dt)
-plt.figure()
-plt.plot(time, displacement_x)
-plt.xlabel('Time (s)')
-plt.ylabel('Displacement (m)')
-plt.title('Displacement of Node 1 in X direction over Time')
-plt.grid(True)
-plt.show()
