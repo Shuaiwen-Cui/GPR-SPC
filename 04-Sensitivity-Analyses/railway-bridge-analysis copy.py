@@ -18,7 +18,7 @@ ops.model('basic', '-ndm', 3, '-ndf', 6)  # 3D model with 6 DOF (3 translations,
 
 # <Configuration>
 
-# -Bridge dimensions
+### Bridge dimensions
 length_span = 10.0  # Length of one span (m)
 width_bridge = 6.0  # Width of the bridge (m)
 height_pier = 8.0  # Height of the bridge piers (m)
@@ -173,21 +173,7 @@ print("element_pier: ", element_pier)
 
 # [BOUNDARY CONDITIONS]
 
-# 1. Fix the leftmost and rightmost deck nodes in xyz directions
-# Leftmost deck nodes (check if nodes exist before applying constraints)
-if node_deck_left and node_deck_right:
-    ops.fix(node_deck_left[0], 1, 1, 1, 0, 0, 0)  # Fix node at left end
-    ops.fix(node_deck_right[0], 1, 1, 1, 0, 0, 0)  # Fix node at left end
-    ops.fix(node_deck_left[-1], 1, 1, 1, 0, 0, 0)  # Fix node at right end
-    ops.fix(node_deck_right[-1], 1, 1, 1, 0, 0, 0)  # Fix node at right end
-
-# 2. Fix all the pier bottom nodes (both left and right) if they exist
-if node_pier_left and node_pier_right:
-    for i in range(len(node_pier_left)):
-        ops.fix(node_pier_left[i], 1, 1, 1, 0, 0, 0)  # Fix left bottom pier nodes
-        ops.fix(node_pier_right[i], 1, 1, 1, 0, 0, 0)  # Fix right bottom pier nodes
-
-
+    
 # [MODEL VISUALIZATION]
 
 # Function to extract coordinates of nodes
