@@ -180,8 +180,40 @@ def get_node_coords(node_ids):
     z_coords = [ops.nodeCoord(node_id)[2] for node_id in node_ids]
     return x_coords, y_coords, z_coords
 
+# Setting Times New Roman font for the entire plot
+plt.rcParams["font.family"] = "Times New Roman"
+
 # Plotting the model with node numbers and element numbers
 fig = plt.figure(figsize=(14, 6))
+
+# Define axis limits to be uniform and "clean" (rounded values)
+x_lim = [0, 40]  # Assuming the total length of the bridge spans
+y_lim = [-1, 7]  # Setting y-range to be a bit wider to include bridge width
+z_lim = [-10, 2]  # To cover the deck and piers' heights
+
+# Set the viewing angle to be consistent for both plots
+view_elev = 30  # Elevation angle
+view_azim = -45  # Azimuth angle
+
+# Function to set equal aspect ratio for 3D plots
+def set_axes_equal(ax):
+    x_limits = ax.get_xlim3d()
+    y_limits = ax.get_ylim3d()
+    z_limits = ax.get_zlim3d()
+
+    x_range = abs(x_limits[1] - x_limits[0])
+    y_range = abs(y_limits[1] - y_limits[0])
+    z_range = abs(z_limits[1] - z_limits[0])
+
+    max_range = max([x_range, y_range, z_range])
+
+    x_middle = np.mean(x_limits)
+    y_middle = np.mean(y_limits)
+    z_middle = np.mean(z_limits)
+
+    ax.set_xlim3d([x_middle - max_range / 2, x_middle + max_range / 2])
+    ax.set_ylim3d([y_middle - max_range / 2, y_middle + max_range / 2])
+    ax.set_zlim3d([z_middle - max_range / 2, z_middle + max_range / 2])
 
 # Left plot: Model with node numbers
 ax1 = fig.add_subplot(121, projection='3d')
@@ -199,20 +231,20 @@ for elem_id in element_list:
     x_elem, y_elem, z_elem = get_node_coords(nodes)
     ax1.plot(x_elem, y_elem, z_elem, 'r-')  # Red lines for elements
 
-# Set equal aspect ratio for all axes
-max_range = np.array([max(x_coords) - min(x_coords), max(y_coords) - min(y_coords), max(z_coords) - min(z_coords)]).max() / 2.0
-mid_x = (max(x_coords) + min(x_coords)) * 0.5
-mid_y = (max(y_coords) + min(y_coords)) * 0.5
-mid_z = (max(z_coords) + min(z_coords)) * 0.5
+# Set axis limits and the viewing angle
+ax1.set_xlim(x_lim)
+ax1.set_ylim(y_lim)
+ax1.set_zlim(z_lim)
+ax1.view_init(elev=view_elev, azim=view_azim)
 
-ax1.set_xlim(mid_x - max_range, mid_x + max_range)
-ax1.set_ylim(mid_y - max_range, mid_y + max_range)
-ax1.set_zlim(mid_z - max_range, mid_z + max_range)
+# Set equal aspect ratio
+set_axes_equal(ax1)
 
+# Axis labels and title with increased font size for title
 ax1.set_xlabel('X (m)')
 ax1.set_ylabel('Y (m)')
 ax1.set_zlabel('Z (m)')
-ax1.set_title('Model with Node Numbers')
+ax1.set_title('Model with Node Numbers', fontsize=18)
 
 # Right plot: Model with element numbers
 ax2 = fig.add_subplot(122, projection='3d')
@@ -220,30 +252,37 @@ ax2 = fig.add_subplot(122, projection='3d')
 # Plot the nodes again
 ax2.scatter(x_coords, y_coords, z_coords, c='b', marker='o', label='Nodes')
 
-# Add element labels
+# Add element labels at 1/3 length of each element
 for elem_id in element_list:
     nodes = ops.eleNodes(elem_id)
     x_elem, y_elem, z_elem = get_node_coords(nodes)
     ax2.plot(x_elem, y_elem, z_elem, 'r-')  # Red lines for elements
     
-    # Calculate the middle point of each element for label
-    mid_x_elem = (x_elem[0] + x_elem[1]) / 2.0
-    mid_y_elem = (y_elem[0] + y_elem[1]) / 2.0
-    mid_z_elem = (z_elem[0] + z_elem[1]) / 2.0
-    ax2.text(mid_x_elem, mid_y_elem, mid_z_elem, f'{elem_id}', fontsize=10, color='green')  # Element number
+    # Calculate the 1/3 position of each element for label
+    third_x_elem = x_elem[0] + (x_elem[1] - x_elem[0]) * 0.33
+    third_y_elem = y_elem[0] + (y_elem[1] - y_elem[0]) * 0.33
+    third_z_elem = z_elem[0] + (z_elem[1] - z_elem[0]) * 0.33
+    ax2.text(third_x_elem, third_y_elem, third_z_elem, f'{elem_id}', fontsize=10, color='green')  # Element number at 1/3 length
 
-# Set equal aspect ratio for all axes
-ax2.set_xlim(mid_x - max_range, mid_x + max_range)
-ax2.set_ylim(mid_y - max_range, mid_y + max_range)
-ax2.set_zlim(mid_z - max_range, mid_z + max_range)
+# Set axis limits and the viewing angle
+ax2.set_xlim(x_lim)
+ax2.set_ylim(y_lim)
+ax2.set_zlim(z_lim)
+ax2.view_init(elev=view_elev, azim=view_azim)
 
+# Set equal aspect ratio
+set_axes_equal(ax2)
+
+# Axis labels and title with increased font size for title
 ax2.set_xlabel('X (m)')
 ax2.set_ylabel('Y (m)')
 ax2.set_zlabel('Z (m)')
-ax2.set_title('Model with Element Numbers')
+ax2.set_title('Model with Element Numbers', fontsize=18)
 
 plt.tight_layout()
 plt.show()
+
+
 
 
 # =================================================
