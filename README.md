@@ -20,6 +20,15 @@ This code is not the version used for Xnode, but can be easily transplanted to X
 
 Current version only has the GPR-SPC part.
 
+## [04-Sensitivity Analysis]
+
+Use a truss structure to simulate timber trestle bridge to analyze the sensitivity of the proposed damage detection framework.
+
+Refer to the `analyzing` subfolder for more details.
+
+- archive-robust: more robust setup
+- archive-sensitivity: more sensitive setup (presented in the paper)
+
 ## Verification(deprecated)
 
 deprecated, use the newer one to check the verification results. (Python on PC vs C on Arm-Cortex device)
